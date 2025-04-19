@@ -34,5 +34,26 @@ namespace MerchantTransactionProcessing.Data
             }
             return base.SaveChanges();
         }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            var entries = ChangeTracker
+                .Entries()
+                .Where(entity => entity.Entity is BaseEntity &&
+                    (entity.State == EntityState.Added || entity.State == EntityState.Modified));
+            foreach (var entry in entries)
+            {
+                var entity = (BaseEntity)entry.Entity;
+                if (entry.State == EntityState.Added)
+                {
+                    entity.CreatedAt = DateTime.UtcNow;
+                }
+                else if (entry.State == EntityState.Modified)
+                {
+                    entity.ModifiedAt = DateTime.UtcNow;
+                }
+            }
+            return base.SaveChangesAsync(cancellationToken);
+        }
     }
 }
